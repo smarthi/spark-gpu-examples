@@ -16,6 +16,23 @@
       <nd4j.version>0.0.3.5.5.3-SNAPSHOT</nd4j.version>
   </properties>
 
+
+ <build>
+     <plugins>
+         <plugin>
+             <groupId>org.apache.maven.plugins</groupId>
+             <artifactId>maven-compiler-plugin</artifactId>
+             <configuration>
+                 <source>1.7</source>
+                 <target>1.7</target>
+             </configuration>
+         </plugin>
+     </plugins>
+ </build>
+
+
+
+
   <dependencies>
 
       <dependency>
@@ -27,7 +44,6 @@
           <groupId>org.nd4j</groupId>
           <artifactId>nd4j-jcublas-6.5</artifactId>
           <version>${nd4j.version}</version>
-          <scope>test</scope>
       </dependency>
   </dependencies>
 </project>

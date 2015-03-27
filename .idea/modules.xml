@@ -2,7 +2,6 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/spark-gpu-examples.iml" filepath="$PROJECT_DIR$/.idea/spark-gpu-examples.iml" />
       <module fileurl="file://$PROJECT_DIR$/spark-gpu-examples.iml" filepath="$PROJECT_DIR$/spark-gpu-examples.iml" />
     </modules>
   </component>

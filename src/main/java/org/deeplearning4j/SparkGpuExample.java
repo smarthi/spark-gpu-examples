@@ -1,17 +1,30 @@
 package org.deeplearning4j;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.spark.SparkConf;
+import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
+import org.deeplearning4j.datasets.iterator.impl.MnistDataSetIterator;
+import org.deeplearning4j.eval.Evaluation;
 import org.deeplearning4j.models.featuredetectors.rbm.RBM;
 import org.deeplearning4j.nn.conf.MultiLayerConfiguration;
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
 import org.deeplearning4j.nn.conf.OutputPreProcessor;
+import org.deeplearning4j.nn.conf.override.ClassifierOverride;
 import org.deeplearning4j.nn.conf.override.ConfOverride;
 import org.deeplearning4j.nn.conf.preprocessor.BinomialSamplingPreProcessor;
 import org.deeplearning4j.nn.layers.factory.LayerFactories;
+import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.deeplearning4j.nn.weights.WeightInit;
 import org.deeplearning4j.spark.impl.multilayer.SparkDl4jMultiLayer;
+import org.nd4j.linalg.api.ndarray.INDArray;
+import org.nd4j.linalg.dataset.DataSet;
+import org.nd4j.linalg.factory.Nd4j;
 
+import java.io.File;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -40,20 +53,10 @@ public class SparkGpuExample {
         MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
                 .momentum(0.9).iterations(1)
                 .constrainGradientToUnitNorm(true).weightInit(WeightInit.DISTRIBUTION)
-                .dist(Distributions.normal(new MersenneTwister(123), 1e-4))
+                .dist(Nd4j.getDistributions().createNormal(0,1))
                 .nIn(784).nOut(10).layerFactory(LayerFactories.getFactory(RBM.class))
                 .list(4).hiddenLayerSizes(600, 500, 400)
-                .override(new ConfOverride() {
-                    @Override
-                    public void override(int i, NeuralNetConfiguration.Builder builder) {
-
-                        if (i == 3) {
-                            builder.activationFunction(Activations.softMaxRows());
-                            builder.layerFactory(LayerFactories.getFactory(OutputLayer.class));
-                            builder.lossFunction(LossFunctions.LossFunction.MCXENT);
-                        }
-                    }
-                }).build();
+                .override(new ClassifierOverride(3)).build();
 
 
 
@@ -77,6 +80,6 @@ public class SparkGpuExample {
 
         INDArray params = network2.params();
         Nd4j.writeTxt(params,"params.txt",",");
-        FileUtils.writeStringToFile(new File("conf.json"),network2.getLayerWiseConfigurations().toJson());
+        FileUtils.writeStringToFile(new File("conf.json"), network2.getLayerWiseConfigurations().toJson());
     }
 }

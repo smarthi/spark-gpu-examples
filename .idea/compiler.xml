@@ -26,5 +26,8 @@
         <module name="spark-gpu-examples" />
       </profile>
     </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="spark-gpu-examples" target="1.7" />
+    </bytecodeTargetLevel>
   </component>
 </project>
