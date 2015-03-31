@@ -11,7 +11,6 @@ import org.deeplearning4j.nn.conf.MultiLayerConfiguration;
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
 import org.deeplearning4j.nn.conf.OutputPreProcessor;
 import org.deeplearning4j.nn.conf.override.ClassifierOverride;
-import org.deeplearning4j.nn.conf.override.ConfOverride;
 import org.deeplearning4j.nn.conf.preprocessor.BinomialSamplingPreProcessor;
 import org.deeplearning4j.nn.layers.factory.LayerFactories;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
@@ -20,6 +19,7 @@ import org.deeplearning4j.spark.impl.multilayer.SparkDl4jMultiLayer;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.dataset.DataSet;
 import org.nd4j.linalg.factory.Nd4j;
+import org.nd4j.linalg.jcublas.kernel.KernelFunctionLoader;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -48,7 +48,6 @@ public class SparkGpuExample {
         Map<Integer,OutputPreProcessor> preProcessorMap = new HashMap<>();
         for(int i = 0; i < 3; i++)
             preProcessorMap.put(i,new BinomialSamplingPreProcessor());
-
         int batchSize = 5000;
         MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
                 .momentum(0.9).iterations(1)
@@ -56,7 +55,7 @@ public class SparkGpuExample {
                 .dist(Nd4j.getDistributions().createNormal(0,1))
                 .nIn(784).nOut(10).layerFactory(LayerFactories.getFactory(RBM.class))
                 .list(4).hiddenLayerSizes(600, 500, 400)
-                .override(new ClassifierOverride(3)).build();
+                .override(new ClassifierOverride(10)).build();
 
 
 
@@ -65,7 +64,7 @@ public class SparkGpuExample {
         network.init();
         System.out.println("Initializing network");
         SparkDl4jMultiLayer master = new SparkDl4jMultiLayer(sc,conf);
-        DataSet d = new MnistDataSetIterator(60000,60000).next();
+        DataSet d = new MnistDataSetIterator(100,100).next();
         List<DataSet> next = new ArrayList<>();
         for(int i = 0; i < d.numExamples(); i++)
             next.add(d.get(i).copy());
