@@ -36,7 +36,7 @@ public class SparkGpuExample {
 
         // set to test mode
         SparkConf sparkConf = new SparkConf()
-                .setMaster("local[8]").set(SparkDl4jMultiLayer.AVERAGE_EACH_ITERATION,"false")
+                .setMaster("local[1]").set(SparkDl4jMultiLayer.AVERAGE_EACH_ITERATION,"false")
                 .set("spark.akka.frameSize", "100")
                 .setAppName("mnist");
 
