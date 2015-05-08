@@ -76,7 +76,7 @@
       <dependency>
           <groupId>org.deeplearning4j</groupId>
           <artifactId>dl4j-spark</artifactId>
-          <version>0.0.3.3.3.alpha1-SNAPSHOT</version>
+          <version>0.0.3.3.3.alpha1</version>
       </dependency>
       <dependency>
           <groupId>org.nd4j</groupId>
