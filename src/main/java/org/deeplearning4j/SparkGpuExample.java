@@ -48,7 +48,7 @@ public class SparkGpuExample {
 
         MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
                 .momentum(0.9).iterations(10)
-                .weightInit(WeightInit.DISTRIBUTION)
+                .weightInit(WeightInit.DISTRIBUTION).batchSize(1000)
                 .dist(new NormalDistribution(0, 1)).lossFunction(LossFunctions.LossFunction.RMSE_XENT)
                 .nIn(784).nOut(10).layer(new RBM())
                 .list(4).hiddenLayerSizes(600, 500, 400)
@@ -64,7 +64,7 @@ public class SparkGpuExample {
         ));
         System.out.println("Initializing network");
         SparkDl4jMultiLayer master = new SparkDl4jMultiLayer(sc,conf);
-        DataSet d = new MnistDataSetIterator(100,100).next();
+        DataSet d = new MnistDataSetIterator(1000,60000).next();
         List<DataSet> next = new ArrayList<>();
         for(int i = 0; i < d.numExamples(); i++)
             next.add(d.get(i).copy());
