@@ -35,9 +35,7 @@ public class SparkGpuExample {
     public static void main(String[] args) throws Exception {
         Nd4j.MAX_ELEMENTS_PER_SLICE = Integer.MAX_VALUE;
         Nd4j.MAX_SLICES_TO_PRINT = Integer.MAX_VALUE;
-        System.setProperty("spark.serializer", KryoSerializer.class.getName());
-        System.setProperty("spark.kryo.registrator", KryoRegistrator.class.getName());
-
+      
         // set to test mode
         SparkConf sparkConf = new SparkConf()
                 .setMaster("local[*]").set(SparkDl4jMultiLayer.AVERAGE_EACH_ITERATION,"false")
