@@ -125,6 +125,14 @@
                   <groupId>javax.servlet</groupId>
                   <artifactId>servlet-api</artifactId>
               </exclusion>
+              <exclusion>
+                  <artifactId>netty</artifactId>
+                  <groupId>io.netty</groupId>
+              </exclusion>
+              <exclusion>
+                  <artifactId>netty-all</artifactId>
+                  <groupId>io.netty</groupId>
+              </exclusion>
           </exclusions>
 
       </dependency>

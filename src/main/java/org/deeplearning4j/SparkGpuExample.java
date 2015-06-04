@@ -8,6 +8,8 @@ import org.apache.commons.io.FileUtils;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.serializer.KryoRegistrator;
+import org.apache.spark.serializer.KryoSerializer;
 import org.deeplearning4j.datasets.iterator.impl.MnistDataSetIterator;
 import org.deeplearning4j.eval.Evaluation;
 import org.deeplearning4j.nn.conf.MultiLayerConfiguration;
@@ -33,6 +35,9 @@ public class SparkGpuExample {
     public static void main(String[] args) throws Exception {
         Nd4j.MAX_ELEMENTS_PER_SLICE = Integer.MAX_VALUE;
         Nd4j.MAX_SLICES_TO_PRINT = Integer.MAX_VALUE;
+        System.setProperty("spark.serializer", KryoSerializer.class.getName());
+        System.setProperty("spark.kryo.registrator", KryoRegistrator.class.getName());
+
         // set to test mode
         SparkConf sparkConf = new SparkConf()
                 .setMaster("local[*]").set(SparkDl4jMultiLayer.AVERAGE_EACH_ITERATION,"false")
