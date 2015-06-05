@@ -35,7 +35,7 @@ public class SparkGpuExample {
     public static void main(String[] args) throws Exception {
         Nd4j.MAX_ELEMENTS_PER_SLICE = Integer.MAX_VALUE;
         Nd4j.MAX_SLICES_TO_PRINT = Integer.MAX_VALUE;
-      
+
         // set to test mode
         SparkConf sparkConf = new SparkConf()
                 .setMaster("local[*]").set(SparkDl4jMultiLayer.AVERAGE_EACH_ITERATION,"false")
@@ -49,26 +49,20 @@ public class SparkGpuExample {
 
         MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
                 .momentum(0.9).iterations(10)
-                .weightInit(WeightInit.DISTRIBUTION).batchSize(1000)
+                .weightInit(WeightInit.DISTRIBUTION).batchSize(10000)
                 .dist(new NormalDistribution(0, 1)).lossFunction(LossFunctions.LossFunction.RMSE_XENT)
                 .nIn(784).nOut(10).layer(new RBM())
                 .list(4).hiddenLayerSizes(600, 500, 400)
-                .override(3, new ClassifierOverride(3)).build();
+                .override(3, new ClassifierOverride()).build();
 
 
 
 
-        MultiLayerNetwork network = new MultiLayerNetwork(conf);
-        network.init();
-        network.setListeners(Collections.singletonList(
-            (IterationListener) new ScoreIterationListener(1)
-        ));
+
         System.out.println("Initializing network");
         SparkDl4jMultiLayer master = new SparkDl4jMultiLayer(sc,conf);
-        DataSet d = new MnistDataSetIterator(1000,60000).next();
-        List<DataSet> next = new ArrayList<>();
-        for(int i = 0; i < d.numExamples(); i++)
-            next.add(d.get(i).copy());
+        DataSet d = new MnistDataSetIterator(60000,60000).next();
+        List<DataSet> next = d.asList();
 
         JavaRDD<DataSet> data = sc.parallelize(next);
         MultiLayerNetwork network2 = master.fitDataSet(data);
