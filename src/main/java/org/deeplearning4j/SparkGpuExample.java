@@ -24,6 +24,7 @@ import org.deeplearning4j.optimize.listeners.ScoreIterationListener;
 import org.deeplearning4j.spark.impl.multilayer.SparkDl4jMultiLayer;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.dataset.DataSet;
+import org.nd4j.linalg.dataset.SplitTestAndTrain;
 import org.nd4j.linalg.factory.Nd4j;
 import org.nd4j.linalg.lossfunctions.LossFunctions;
 
@@ -38,7 +39,7 @@ public class SparkGpuExample {
 
         // set to test mode
         SparkConf sparkConf = new SparkConf()
-                .setMaster("local[*]").set(SparkDl4jMultiLayer.AVERAGE_EACH_ITERATION,"false")
+                .setMaster("local[*]").set(SparkDl4jMultiLayer.AVERAGE_EACH_ITERATION, "false")
                 .set("spark.akka.frameSize", "100")
                 .setAppName("mnist");
 
@@ -49,8 +50,8 @@ public class SparkGpuExample {
 
         MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
                 .momentum(0.9).iterations(10)
-                .weightInit(WeightInit.DISTRIBUTION).batchSize(10000)
-                .dist(new NormalDistribution(0, 1)).lossFunction(LossFunctions.LossFunction.RMSE_XENT)
+                .weightInit(WeightInit.XAVIER).batchSize(10000)
+               .lossFunction(LossFunctions.LossFunction.RMSE_XENT)
                 .nIn(784).nOut(10).layer(new RBM())
                 .list(4).hiddenLayerSizes(600, 500, 400)
                 .override(3, new ClassifierOverride()).build();
@@ -62,13 +63,15 @@ public class SparkGpuExample {
         System.out.println("Initializing network");
         SparkDl4jMultiLayer master = new SparkDl4jMultiLayer(sc,conf);
         DataSet d = new MnistDataSetIterator(60000,60000).next();
-        List<DataSet> next = d.asList();
+        d.shuffle();
+        SplitTestAndTrain split = d.splitTestAndTrain(0.8);
+        List<DataSet> next = split.getTrain().asList();
 
         JavaRDD<DataSet> data = sc.parallelize(next);
         MultiLayerNetwork network2 = master.fitDataSet(data);
 
         Evaluation evaluation = new Evaluation();
-        evaluation.eval(d.getLabels(),network2.output(d.getFeatureMatrix()));
+        evaluation.eval(split.getTest().getLabels(),network2.output(split.getTest().getFeatureMatrix()));
         System.out.println("Averaged once " + evaluation.stats());
 
 
