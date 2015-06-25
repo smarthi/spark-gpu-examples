@@ -38,6 +38,7 @@ public class SparkGpuExample {
         Nd4j.MAX_SLICES_TO_PRINT = Integer.MAX_VALUE;
 
         // set to test mode
+        // this is where you configure Spark
         SparkConf sparkConf = new SparkConf()
                 .setMaster("local[*]").set(SparkDl4jMultiLayer.AVERAGE_EACH_ITERATION, "false")
                 .set("spark.akka.frameSize", "100")
@@ -47,7 +48,7 @@ public class SparkGpuExample {
 
         JavaSparkContext sc = new JavaSparkContext(sparkConf);
 
-
+        //This is where you configure your deep-belief net
         MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
                 .momentum(0.9).iterations(10)
                 .weightInit(WeightInit.XAVIER).batchSize(10000)
@@ -56,10 +57,7 @@ public class SparkGpuExample {
                 .list(4).hiddenLayerSizes(600, 500, 400)
                 .override(3, new ClassifierOverride()).build();
 
-
-
-
-
+        //and here you bring Spark and the MultiLayer neural net together...
         System.out.println("Initializing network");
         SparkDl4jMultiLayer master = new SparkDl4jMultiLayer(sc,conf);
         DataSet d = new MnistDataSetIterator(60000,60000).next();
@@ -67,6 +65,8 @@ public class SparkGpuExample {
         SplitTestAndTrain split = d.splitTestAndTrain(0.8);
         List<DataSet> next = split.getTrain().asList();
 
+        //RDDs... the data structure of Spark 1.2
+        //Calling fit makes the net learn the data.
         JavaRDD<DataSet> data = sc.parallelize(next);
         MultiLayerNetwork network2 = master.fitDataSet(data);
 
