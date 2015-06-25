@@ -43,9 +43,6 @@ import org.nd4j.linalg.lossfunctions.LossFunctions;
 public class SparkGpuExample {
 
     public static void main(String[] args) throws Exception {
-        Nd4j.MAX_ELEMENTS_PER_SLICE = Integer.MAX_VALUE;
-        Nd4j.MAX_SLICES_TO_PRINT = Integer.MAX_VALUE;
-
         // set to test mode
         // this is where you configure Spark
         SparkConf sparkConf = new SparkConf()
@@ -66,10 +63,7 @@ public class SparkGpuExample {
                 .list(4).hiddenLayerSizes(600, 500, 400)
                 .override(3, new ClassifierOverride()).build();
 
-      /*  MultiLayerNetwork network = new MultiLayerNetwork(conf);
-        network.init();
-        SerializationTester.testSerialization(sc.env().actorSystem(),network);
-*/
+
         //and here you bring Spark and the MultiLayer neural net together...
         System.out.println("Initializing network");
         SparkDl4jMultiLayer master = new SparkDl4jMultiLayer(sc,conf);
@@ -82,6 +76,8 @@ public class SparkGpuExample {
 
         System.out.println("Shuffled data set");
         SplitTestAndTrain split = d.splitTestAndTrain(0.8);
+        SerializationTester.testSerialization(sc.env().actorSystem(),split);
+
         System.out.println("Split data");
         List<DataSet> next = split.getTrain().asList();
         System.out.println("Putting data in rdd");
