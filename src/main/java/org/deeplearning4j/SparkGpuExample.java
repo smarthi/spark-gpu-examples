@@ -22,6 +22,7 @@ import org.deeplearning4j.nn.weights.WeightInit;
 import org.deeplearning4j.optimize.api.IterationListener;
 import org.deeplearning4j.optimize.listeners.ScoreIterationListener;
 import org.deeplearning4j.spark.impl.multilayer.SparkDl4jMultiLayer;
+import org.deeplearning4j.util.SerializationUtils;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.dataset.DataSet;
 import org.nd4j.linalg.dataset.SplitTestAndTrain;
@@ -52,7 +53,7 @@ public class SparkGpuExample {
         MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
                 .momentum(0.9).iterations(10)
                 .weightInit(WeightInit.XAVIER).batchSize(10000)
-               .lossFunction(LossFunctions.LossFunction.RMSE_XENT)
+                .lossFunction(LossFunctions.LossFunction.RMSE_XENT)
                 .nIn(784).nOut(10).layer(new RBM())
                 .list(4).hiddenLayerSizes(600, 500, 400)
                 .override(3, new ClassifierOverride()).build();
@@ -61,7 +62,9 @@ public class SparkGpuExample {
         System.out.println("Initializing network");
         SparkDl4jMultiLayer master = new SparkDl4jMultiLayer(sc,conf);
         System.out.println("Loading data...");
-        DataSet d = new MnistDataSetIterator(60000,60000).next();
+        DataSet d = !(new File("dataset.ser").exists()) ? new MnistDataSetIterator(60000,60000).next() : (DataSet) SerializationUtils.readObject(new File("dataset.ser"));
+        if(!(new File("dataset.ser").exists()))
+            SerializationUtils.saveObject(d,new File("dataset.ser"));
         d.shuffle();
         System.out.println("Shuffled data set");
         SplitTestAndTrain split = d.splitTestAndTrain(0.8);
