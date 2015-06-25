@@ -57,16 +57,20 @@ public class SparkGpuExample {
         //This is where you configure your deep-belief net
         MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
                 .momentum(0.9).iterations(10)
-                .weightInit(WeightInit.XAVIER).batchSize(100)
+                .weightInit(WeightInit.XAVIER).batchSize(1)
                 .lossFunction(LossFunctions.LossFunction.RMSE_XENT)
                 .nIn(784).nOut(10).layer(new RBM())
                 .list(4).hiddenLayerSizes(600, 500, 400)
                 .override(3, new ClassifierOverride()).build();
 
+        MultiLayerNetwork network = new MultiLayerNetwork(conf);
+        network.init();
+
+
 
         //and here you bring Spark and the MultiLayer neural net together...
         System.out.println("Initializing network");
-        SparkDl4jMultiLayer master = new SparkDl4jMultiLayer(sc,conf);
+        SparkDl4jMultiLayer master = new SparkDl4jMultiLayer(sc.sc(),network);
 
         System.out.println("Loading data...");
         DataSet d = !(new File("dataset.ser").exists()) ? new MnistDataSetIterator(60000,60000).next() : (DataSet) SerializationUtils.readObject(new File("dataset.ser"));
@@ -76,7 +80,6 @@ public class SparkGpuExample {
 
         System.out.println("Shuffled data set");
         SplitTestAndTrain split = d.splitTestAndTrain(0.8);
-        SerializationTester.testSerialization(sc.env().actorSystem(),split);
 
         System.out.println("Split data");
         List<DataSet> next = split.getTrain().asList();
