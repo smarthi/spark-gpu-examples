@@ -60,14 +60,18 @@ public class SparkGpuExample {
         //and here you bring Spark and the MultiLayer neural net together...
         System.out.println("Initializing network");
         SparkDl4jMultiLayer master = new SparkDl4jMultiLayer(sc,conf);
+        System.out.println("Loading data...");
         DataSet d = new MnistDataSetIterator(60000,60000).next();
         d.shuffle();
+        System.out.println("Shuffled data set");
         SplitTestAndTrain split = d.splitTestAndTrain(0.8);
+        System.out.println("Split data");
         List<DataSet> next = split.getTrain().asList();
-
+        System.out.println("Putting data in rdd");
         //RDDs... the data structure of Spark 1.2
         //Calling fit makes the net learn the data.
         JavaRDD<DataSet> data = sc.parallelize(next);
+        System.out.println("Running network");
         MultiLayerNetwork network2 = master.fitDataSet(data);
 
         Evaluation evaluation = new Evaluation();
