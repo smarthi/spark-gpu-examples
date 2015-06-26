@@ -17,6 +17,7 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.serializer.KryoRegistrator;
 import org.apache.spark.serializer.KryoSerializer;
+import org.apache.spark.serializer.SerializationDebugger;
 import org.deeplearning4j.datasets.iterator.impl.MnistDataSetIterator;
 import org.deeplearning4j.eval.Evaluation;
 import org.deeplearning4j.nn.conf.MultiLayerConfiguration;
@@ -77,6 +78,8 @@ public class SparkGpuExample {
         if(!(new File("dataset.ser").exists()))
             SerializationUtils.saveObject(d,new File("dataset.ser"));
         d.shuffle();
+
+        SerializationDebugger.enableDebugging();
 
         System.out.println("Shuffled data set");
         SplitTestAndTrain split = d.splitTestAndTrain(0.8);
