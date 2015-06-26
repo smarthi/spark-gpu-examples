@@ -1,6 +1,7 @@
 package org.deeplearning4j;
 
 import java.io.File;
+import java.security.AccessController;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -74,12 +75,13 @@ public class SparkGpuExample {
         SparkDl4jMultiLayer master = new SparkDl4jMultiLayer(sc.sc(),network);
 
         System.out.println("Loading data...");
-        DataSet d = !(new File("dataset.ser").exists()) ? new MnistDataSetIterator(60000,60000).next() : (DataSet) SerializationUtils.readObject(new File("dataset.ser"));
+        DataSet d = !(new File("dataset.ser").exists()) ? new MnistDataSetIterator(10,10).next() : (DataSet) SerializationUtils.readObject(new File("dataset.ser"));
         if(!(new File("dataset.ser").exists()))
             SerializationUtils.saveObject(d,new File("dataset.ser"));
         d.shuffle();
 
-        SerializationDebugger.enableDebugging();
+        AccessController.doPrivileged(new sun.security.action.GetBooleanAction(
+                "sun.io.serialization.extendedDebugInfo")).booleanValue();
 
         System.out.println("Shuffled data set");
         SplitTestAndTrain split = d.splitTestAndTrain(0.8);
