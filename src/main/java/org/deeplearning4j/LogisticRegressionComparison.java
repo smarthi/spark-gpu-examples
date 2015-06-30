@@ -42,7 +42,7 @@ public class LogisticRegressionComparison {
         SparkConf conf = new SparkConf().setAppName("Logistic Classifier Example").setMaster("local[*]");
         SparkContext sc = new SparkContext(conf);
         RecordReader svmLightReader = new SVMLightRecordReader();
-        String path = "/home/agibsonccc/code/spark-gpu-examples/src/main/resources/data/svmLight/iris_svmLight_0.txt";
+        String path = "src/main/resources/data/svmLight/iris_svmLight_0.txt";
         String outPath = "iris_svmlight_out.txt";
         svmLightReader.initialize(new FileSplit(new File(path)));
         Configuration writeConf = new Configuration();
@@ -106,14 +106,14 @@ public class LogisticRegressionComparison {
 
         // Get evaluation metrics.
         MulticlassMetrics metrics = new MulticlassMetrics(predictionAndLabels.rdd());
-        double precision = metrics.precision();
-        System.out.println("Precision = " + precision);
+        double precision = metrics.fMeasure();
+        System.out.println("F1 = " + precision);
 
         NeuralNetConfiguration neuralNetConfiguration = new NeuralNetConfiguration.Builder()
                 .lossFunction(LossFunctions.LossFunction.MCXENT).
                         optimizationAlgo(OptimizationAlgorithm.ITERATION_GRADIENT_DESCENT)
                 .activationFunction("softmax")
-                .iterations(10).weightInit(WeightInit.ZERO)
+                .iterations(10).weightInit(WeightInit.XAVIER)
                 .learningRate(1e-1).nIn(4).nOut(3).layer(new org.deeplearning4j.nn.conf.layers.OutputLayer()).build();
 
 
@@ -131,8 +131,8 @@ public class LogisticRegressionComparison {
         );
 
         MulticlassMetrics dl4jMetrics = new MulticlassMetrics(predictionAndLabelsDl4j.rdd());
-        double dl4jPrecision = dl4jMetrics.precision();
-        System.out.println("Precision = " + dl4jPrecision);
+        double dl4jPrecision = dl4jMetrics.fMeasure();
+        System.out.println("F1 = " + dl4jPrecision);
 
 
 
