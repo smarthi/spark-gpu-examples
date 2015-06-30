@@ -5,6 +5,7 @@ import java.security.AccessController;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 
 import akka.actor.ActorSystem;
 import akka.actor.ExtendedActorSystem;
@@ -19,17 +20,21 @@ import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.serializer.KryoRegistrator;
 import org.apache.spark.serializer.KryoSerializer;
 import org.apache.spark.serializer.SerializationDebugger;
+import org.deeplearning4j.datasets.iterator.impl.IrisDataSetIterator;
 import org.deeplearning4j.datasets.iterator.impl.MnistDataSetIterator;
 import org.deeplearning4j.eval.Evaluation;
+import org.deeplearning4j.nn.api.OptimizationAlgorithm;
 import org.deeplearning4j.nn.conf.MultiLayerConfiguration;
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
 import org.deeplearning4j.nn.conf.distribution.NormalDistribution;
 import org.deeplearning4j.nn.conf.layers.RBM;
 import org.deeplearning4j.nn.conf.override.ClassifierOverride;
+import org.deeplearning4j.nn.layers.OutputLayer;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.deeplearning4j.nn.weights.WeightInit;
 import org.deeplearning4j.optimize.api.IterationListener;
 import org.deeplearning4j.optimize.listeners.ScoreIterationListener;
+import org.deeplearning4j.spark.impl.layer.SparkDl4jLayer;
 import org.deeplearning4j.spark.impl.multilayer.SparkDl4jMultiLayer;
 import org.deeplearning4j.spark.util.SerializationTester;
 import org.deeplearning4j.util.SerializationUtils;
@@ -39,6 +44,8 @@ import org.nd4j.linalg.dataset.SplitTestAndTrain;
 import org.nd4j.linalg.factory.Nd4j;
 import org.nd4j.linalg.lossfunctions.LossFunctions;
 
+import static org.junit.Assert.assertEquals;
+
 /**
  * @author sonali
  */
@@ -46,62 +53,44 @@ public class SparkGpuExample {
 
     public static void main(String[] args) throws Exception {
         // set to test mode
-        // this is where you configure Spark
-        SparkConf sparkConf = new SparkConf()
-                .setMaster("local[*]").set(SparkDl4jMultiLayer.AVERAGE_EACH_ITERATION, "false")
-                .set("spark.akka.frameSize", "100")
-                .setAppName("mnist");
+        SparkConf sparkConf = new SparkConf().set(SparkDl4jMultiLayer.AVERAGE_EACH_ITERATION,"true")
+                .setMaster("local[*]")
+                .setAppName("sparktest");
 
-        System.out.println("Setting up Spark Context...");
 
         JavaSparkContext sc = new JavaSparkContext(sparkConf);
 
-        //This is where you configure your deep-belief net
-        MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
-                .momentum(0.9).iterations(10)
-                .weightInit(WeightInit.XAVIER).batchSize(1)
-                .lossFunction(LossFunctions.LossFunction.RMSE_XENT)
-                .nIn(784).nOut(10).layer(new RBM())
-                .list(4).hiddenLayerSizes(600, 500, 400)
-                .override(3, new ClassifierOverride()).build();
 
-        MultiLayerNetwork network = new MultiLayerNetwork(conf);
-        network.init();
+        NeuralNetConfiguration conf = new NeuralNetConfiguration.Builder()
+                .lossFunction(LossFunctions.LossFunction.MCXENT).optimizationAlgo(OptimizationAlgorithm.ITERATION_GRADIENT_DESCENT)
+                .activationFunction("softmax")
+                .iterations(10).weightInit(WeightInit.XAVIER)
+                .learningRate(1e-1).nIn(4).nOut(3).layer(new org.deeplearning4j.nn.conf.layers.OutputLayer()).build();
 
 
 
-        //and here you bring Spark and the MultiLayer neural net together...
         System.out.println("Initializing network");
-        SparkDl4jMultiLayer master = new SparkDl4jMultiLayer(sc.sc(),network);
-
-        System.out.println("Loading data...");
-        DataSet d = !(new File("dataset.ser").exists()) ? new MnistDataSetIterator(10,10).next() : (DataSet) SerializationUtils.readObject(new File("dataset.ser"));
-        if(!(new File("dataset.ser").exists()))
-            SerializationUtils.saveObject(d,new File("dataset.ser"));
+        SparkDl4jLayer master = new SparkDl4jLayer(sc,conf);
+        DataSet d = new IrisDataSetIterator(150,150).next();
+        d.normalizeZeroMeanZeroUnitVariance();
         d.shuffle();
+        List<DataSet> next = d.asList();
 
-        AccessController.doPrivileged(new sun.security.action.GetBooleanAction(
-                "sun.io.serialization.extendedDebugInfo")).booleanValue();
 
-        System.out.println("Shuffled data set");
-        SplitTestAndTrain split = d.splitTestAndTrain(0.8);
-
-        System.out.println("Split data");
-        List<DataSet> next = split.getTrain().asList();
-        System.out.println("Putting data in rdd");
-        //RDDs... the data structure of Spark 1.2
-        //Calling fit makes the net learn the data.
         JavaRDD<DataSet> data = sc.parallelize(next);
-        System.out.println("Running network");
-        MultiLayerNetwork network2 = master.fitDataSet(data);
 
-        Evaluation evaluation = new Evaluation();
-        evaluation.eval(split.getTest().getLabels(),network2.output(split.getTest().getFeatureMatrix()));
-        System.out.println("Averaged once " + evaluation.stats());
 
+
+        OutputLayer network2 =(OutputLayer) master.fitDataSet(data);
 
         INDArray params = network2.params();
-        Nd4j.writeTxt(params,"params.txt",",");
-        FileUtils.writeStringToFile(new File("conf.json"), network2.getLayerWiseConfigurations().toJson());
+        File writeTo = new File(UUID.randomUUID().toString());
+        Nd4j.writeTxt(params, writeTo.getAbsolutePath(), ",");
+        INDArray load = Nd4j.readTxt(writeTo.getAbsolutePath(),",");
+        assertEquals(params, load);
+        writeTo.delete();
+        Evaluation evaluation = new Evaluation();
+        evaluation.eval(d.getLabels(), network2.output(d.getFeatureMatrix()));
+        System.out.println(evaluation.stats());
     }
 }
