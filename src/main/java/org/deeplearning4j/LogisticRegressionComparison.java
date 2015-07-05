@@ -1,10 +1,13 @@
 package org.deeplearning4j;
 
+import org.apache.commons.lang3.time.StopWatch;
 import org.apache.spark.SparkConf;
 import org.apache.spark.SparkContext;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.Function;
+import org.apache.spark.ml.classification.LogisticRegression;
+import org.apache.spark.mllib.classification.LogisticRegressionWithSGD;
 import org.apache.spark.mllib.feature.StandardScaler;
 
 import org.apache.spark.mllib.classification.LogisticRegressionModel;
@@ -13,6 +16,10 @@ import org.apache.spark.mllib.evaluation.MulticlassMetrics;
 import org.apache.spark.mllib.feature.StandardScalerModel;
 import org.apache.spark.mllib.linalg.Vector;
 import org.apache.spark.mllib.linalg.Vectors;
+import org.apache.spark.mllib.optimization.Gradient;
+import org.apache.spark.mllib.optimization.L1Updater;
+import org.apache.spark.mllib.optimization.LBFGS;
+import org.apache.spark.mllib.optimization.LogisticGradient;
 import org.apache.spark.mllib.regression.LabeledPoint;
 import org.apache.spark.mllib.util.MLUtils;
 import org.canova.api.conf.Configuration;
@@ -31,6 +38,7 @@ import org.nd4j.linalg.lossfunctions.LossFunctions;
 import scala.Tuple2;
 
 import java.io.File;
+import java.util.concurrent.TimeUnit;
 
 
 /**
@@ -85,17 +93,21 @@ public class LogisticRegressionComparison {
         JavaRDD<LabeledPoint>[] splits = normalizedData.randomSplit(new double[]{0.6, 0.4}, 11L);
         JavaRDD<LabeledPoint> training = splits[0].cache();
         JavaRDD<LabeledPoint> test = splits[1];
-
+        Gradient g = new LogisticGradient(3);
+        StopWatch watch = new StopWatch();
         // Run training algorithm to build the model.
-        final LogisticRegressionModel model = new LogisticRegressionWithLBFGS()
-                .setNumClasses(3)
-                .run(training.rdd());
-
+        LogisticRegressionWithLBFGS model = new LogisticRegressionWithLBFGS().setNumClasses(3);
+        model.optimizer().setMaxNumIterations(10);
+        long start = System.currentTimeMillis();
+        final LogisticRegressionModel model3 = model.run(training.rdd());
+        long end = System.currentTimeMillis();
+        System.out.println("Time for spark " + Math.abs(end - start));
+        watch.reset();
         // Compute raw scores on the test set.
         JavaRDD<Tuple2<Object, Object>> predictionAndLabels = test.map(
                 new Function<LabeledPoint, Tuple2<Object, Object>>() {
                     public Tuple2<Object, Object> call(LabeledPoint p) {
-                        Double prediction = model.predict(p.features());
+                        Double prediction = model3.predict(p.features());
                         return new Tuple2<Object, Object>(prediction, p.label());
                     }
                 }
@@ -119,7 +131,9 @@ public class LogisticRegressionComparison {
 
         System.out.println("Initializing network");
         final SparkDl4jLayer master = new SparkDl4jLayer(sc,neuralNetConfiguration);
+        start =System.currentTimeMillis();
         master.fit(new JavaSparkContext(sc), splits[0]);
+        end =System.currentTimeMillis();
         // Compute raw scores on the test set.
         JavaRDD<Tuple2<Object, Object>> predictionAndLabelsDl4j = test.map(
                 new Function<LabeledPoint, Tuple2<Object, Object>>() {
@@ -133,6 +147,7 @@ public class LogisticRegressionComparison {
         MulticlassMetrics dl4jMetrics = new MulticlassMetrics(predictionAndLabelsDl4j.rdd());
         double dl4jPrecision = dl4jMetrics.fMeasure();
         System.out.println("F1 = " + dl4jPrecision);
+        System.out.println("Time for dl4j " + Math.abs(end - start));
 
 
 

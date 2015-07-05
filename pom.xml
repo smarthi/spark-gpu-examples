@@ -156,7 +156,7 @@
         </dependency>
         <dependency>
             <groupId>org.nd4j</groupId>
-            <artifactId>nd4j-jblas</artifactId>
+            <artifactId>nd4j-jcublas-7.0</artifactId>
             <version>${nd4j.version}</version>
         </dependency>
     </dependencies>

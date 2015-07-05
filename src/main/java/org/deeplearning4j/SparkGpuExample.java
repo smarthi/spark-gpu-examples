@@ -83,12 +83,6 @@ public class SparkGpuExample {
 
         OutputLayer network2 =(OutputLayer) master.fitDataSet(data);
 
-        INDArray params = network2.params();
-        File writeTo = new File(UUID.randomUUID().toString());
-        Nd4j.writeTxt(params, writeTo.getAbsolutePath(), ",");
-        INDArray load = Nd4j.readTxt(writeTo.getAbsolutePath(),",");
-        assertEquals(params, load);
-        writeTo.delete();
         Evaluation evaluation = new Evaluation();
         evaluation.eval(d.getLabels(), network2.output(d.getFeatureMatrix()));
         System.out.println(evaluation.stats());
