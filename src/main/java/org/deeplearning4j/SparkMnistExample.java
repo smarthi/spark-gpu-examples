@@ -3,8 +3,9 @@ package org.deeplearning4j;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
+import org.canova.api.records.reader.RecordReader;
+import org.canova.api.records.reader.impl.SVMLightRecordReader;
 import org.deeplearning4j.datasets.iterator.DataSetIterator;
-import org.deeplearning4j.datasets.iterator.impl.IrisDataSetIterator;
 import org.deeplearning4j.datasets.iterator.impl.MnistDataSetIterator;
 import org.deeplearning4j.eval.Evaluation;
 import org.deeplearning4j.nn.api.OptimizationAlgorithm;
@@ -12,20 +13,15 @@ import org.deeplearning4j.nn.conf.MultiLayerConfiguration;
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
 import org.deeplearning4j.nn.conf.layers.RBM;
 import org.deeplearning4j.nn.conf.override.ClassifierOverride;
-import org.deeplearning4j.nn.layers.OutputLayer;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.deeplearning4j.nn.weights.WeightInit;
-import org.deeplearning4j.optimize.api.IterationListener;
-import org.deeplearning4j.optimize.listeners.ScoreIterationListener;
-import org.deeplearning4j.plot.iterationlistener.ActivationMeanIterationListener;
-import org.deeplearning4j.spark.impl.layer.SparkDl4jLayer;
+import org.deeplearning4j.spark.canova.RecordReaderFunction;
 import org.deeplearning4j.spark.impl.multilayer.SparkDl4jMultiLayer;
 import org.nd4j.linalg.dataset.DataSet;
 import org.nd4j.linalg.lossfunctions.LossFunctions;
 import parquet.org.slf4j.Logger;
 import parquet.org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -47,7 +43,7 @@ public class SparkMnistExample {
 
 
         log.info("Load data....");
-        DataSetIterator iter = new MnistDataSetIterator(60000,60000);
+        DataSetIterator iter = new MnistDataSetIterator(10000,10000);
         DataSet d = iter.next();
         d.shuffle();
 
@@ -61,7 +57,7 @@ public class SparkMnistExample {
                 .constrainGradientToUnitNorm(true)
                 .iterations(5).activationFunction("relu")
                 .lossFunction(LossFunctions.LossFunction.RMSE_XENT)
-                .learningRate(1e-1f)
+                .learningRate(1e-1f).batchSize(1000)
                 .momentum(0.5).constrainGradientToUnitNorm(true)
                 .momentumAfter(Collections.singletonMap(3, 0.9))
                 .optimizationAlgo(OptimizationAlgorithm.CONJUGATE_GRADIENT)
@@ -76,13 +72,11 @@ public class SparkMnistExample {
 
         System.out.println("Initializing network");
         SparkDl4jMultiLayer master = new SparkDl4jMultiLayer(sc,conf);
-        List<DataSet> next = d.asList();
 
+        JavaRDD<String> lines = sc.textFile("s3n://dl4j-distribution/mnist_svmlight.txt");
+        RecordReader svmLight = new SVMLightRecordReader();
 
-        JavaRDD<DataSet> data = sc.parallelize(next);
-
-
-
+        JavaRDD<DataSet> data = lines.map(new RecordReaderFunction(svmLight,784,10));
         MultiLayerNetwork network2 = master.fitDataSet(data);
 
         Evaluation evaluation = new Evaluation();
