@@ -57,7 +57,7 @@ public class SparkMnistExample {
                 .weightInit(WeightInit.XAVIER)
                 .seed(123)
                 .constrainGradientToUnitNorm(true)
-                .iterations(5).activationFunction("linear")
+                .iterations(5).activationFunction("identity")
                 .lossFunction(LossFunctions.LossFunction.RMSE_XENT)
                 .learningRate(1e-1f).batchSize(1000)
                 .momentum(0.5).constrainGradientToUnitNorm(true)
