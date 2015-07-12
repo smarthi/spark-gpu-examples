@@ -19,6 +19,7 @@ import org.deeplearning4j.nn.weights.WeightInit;
 import org.deeplearning4j.spark.canova.RecordReaderFunction;
 import org.deeplearning4j.spark.impl.multilayer.SparkDl4jMultiLayer;
 import org.nd4j.linalg.dataset.DataSet;
+import org.nd4j.linalg.factory.Nd4j;
 import org.nd4j.linalg.lossfunctions.LossFunctions;
 import parquet.org.slf4j.Logger;
 import parquet.org.slf4j.LoggerFactory;
@@ -44,9 +45,7 @@ public class SparkMnistExample {
 
 
         log.info("Load data....");
-        DataSetIterator iter = new MnistDataSetIterator(10000,10000);
-        DataSet d = iter.next();
-        d.shuffle();
+
 
         log.info("Build model....");
         MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
@@ -73,8 +72,8 @@ public class SparkMnistExample {
 
         System.out.println("Initializing network");
         SparkDl4jMultiLayer master = new SparkDl4jMultiLayer(sc,conf);
-
-        JavaRDD<String> lines = sc.textFile("s3n://dl4j-distribution/mnist_svmlight.txt");
+        //number of partitions should be partitioned by batch size
+        JavaRDD<String> lines = sc.textFile("s3n://dl4j-distribution/mnist_svmlight.txt",conf.getConf(0).getBatchSize() / 60000);
         RecordReader svmLight = new SVMLightRecordReader();
         Configuration canovaConf = new Configuration();
         //number of features + label
@@ -83,9 +82,6 @@ public class SparkMnistExample {
 
         JavaRDD<DataSet> data = lines.map(new RecordReaderFunction(svmLight, 784, 10));
         MultiLayerNetwork network2 = master.fitDataSet(data);
-
-        Evaluation evaluation = new Evaluation();
-        evaluation.eval(d.getLabels(), network2.output(d.getFeatureMatrix()));
-        System.out.println(evaluation.stats());
+        Nd4j.writeTxt(network2.params(),"params.txt","\t");
     }
 }
