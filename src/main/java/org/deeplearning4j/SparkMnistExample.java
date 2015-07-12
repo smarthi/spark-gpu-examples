@@ -79,6 +79,7 @@ public class SparkMnistExample {
         Configuration canovaConf = new Configuration();
         //number of features + label
         canovaConf.setInt(SVMLightRecordReader.NUM_ATTRIBUTES,785);
+        svmLight.setConf(canovaConf);
 
         JavaRDD<DataSet> data = lines.map(new RecordReaderFunction(svmLight, 784, 10));
         MultiLayerNetwork network2 = master.fitDataSet(data);
