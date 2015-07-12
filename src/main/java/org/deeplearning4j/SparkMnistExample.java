@@ -24,6 +24,8 @@ import org.nd4j.linalg.lossfunctions.LossFunctions;
 import parquet.org.slf4j.Logger;
 import parquet.org.slf4j.LoggerFactory;
 
+import java.io.DataOutputStream;
+import java.io.FileOutputStream;
 import java.util.Collections;
 import java.util.List;
 
@@ -60,7 +62,7 @@ public class SparkMnistExample {
                 .learningRate(1e-1f).batchSize(1000)
                 .momentum(0.5).constrainGradientToUnitNorm(true)
                 .momentumAfter(Collections.singletonMap(3, 0.9))
-                .optimizationAlgo(OptimizationAlgorithm.CONJUGATE_GRADIENT)
+                .optimizationAlgo(OptimizationAlgorithm.GRADIENT_DESCENT)
                 .list(4)
                 .hiddenLayerSizes(new int[]{600, 250, 200})
                 .override(3, new ClassifierOverride())
@@ -82,6 +84,11 @@ public class SparkMnistExample {
 
         JavaRDD<DataSet> data = lines.map(new RecordReaderFunction(svmLight, 784, 10));
         MultiLayerNetwork network2 = master.fitDataSet(data);
-        Nd4j.writeTxt(network2.params(),"params.txt","\t");
+        FileOutputStream fos  = new FileOutputStream("params.txt");
+        DataOutputStream dos = new DataOutputStream(fos);
+        Nd4j.write(network2.params(),dos);
+        dos.flush();
+        dos.close();
+
     }
 }
