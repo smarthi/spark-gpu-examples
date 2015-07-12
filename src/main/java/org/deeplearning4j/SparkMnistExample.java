@@ -3,6 +3,7 @@ package org.deeplearning4j;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
+import org.canova.api.conf.Configuration;
 import org.canova.api.records.reader.RecordReader;
 import org.canova.api.records.reader.impl.SVMLightRecordReader;
 import org.deeplearning4j.datasets.iterator.DataSetIterator;
@@ -75,8 +76,11 @@ public class SparkMnistExample {
 
         JavaRDD<String> lines = sc.textFile("s3n://dl4j-distribution/mnist_svmlight.txt");
         RecordReader svmLight = new SVMLightRecordReader();
+        Configuration canovaConf = new Configuration();
+        //number of features + label
+        canovaConf.setInt(SVMLightRecordReader.NUM_ATTRIBUTES,785);
 
-        JavaRDD<DataSet> data = lines.map(new RecordReaderFunction(svmLight,784,10));
+        JavaRDD<DataSet> data = lines.map(new RecordReaderFunction(svmLight, 784, 10));
         MultiLayerNetwork network2 = master.fitDataSet(data);
 
         Evaluation evaluation = new Evaluation();
