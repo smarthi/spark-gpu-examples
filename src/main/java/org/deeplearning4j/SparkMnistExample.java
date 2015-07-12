@@ -38,7 +38,7 @@ public class SparkMnistExample {
 
     public static void main(String[] args) throws Exception {
         // set to test mode
-        SparkConf sparkConf = new SparkConf().set(SparkDl4jMultiLayer.AVERAGE_EACH_ITERATION, "true")
+        SparkConf sparkConf = new SparkConf().set(SparkDl4jMultiLayer.AVERAGE_EACH_ITERATION, "false")
                 .setMaster("local[*]")
                 .setAppName("sparktest");
 
@@ -57,12 +57,12 @@ public class SparkMnistExample {
                 .weightInit(WeightInit.XAVIER)
                 .seed(123)
                 .constrainGradientToUnitNorm(true)
-                .iterations(5).activationFunction("relu")
+                .iterations(5).activationFunction("linear")
                 .lossFunction(LossFunctions.LossFunction.RMSE_XENT)
                 .learningRate(1e-1f).batchSize(1000)
                 .momentum(0.5).constrainGradientToUnitNorm(true)
                 .momentumAfter(Collections.singletonMap(3, 0.9))
-                .optimizationAlgo(OptimizationAlgorithm.GRADIENT_DESCENT)
+                .optimizationAlgo(OptimizationAlgorithm.ITERATION_GRADIENT_DESCENT)
                 .list(4)
                 .hiddenLayerSizes(new int[]{600, 250, 200})
                 .override(3, new ClassifierOverride())
@@ -86,7 +86,7 @@ public class SparkMnistExample {
         MultiLayerNetwork network2 = master.fitDataSet(data);
         FileOutputStream fos  = new FileOutputStream("params.txt");
         DataOutputStream dos = new DataOutputStream(fos);
-        Nd4j.write(network2.params(),dos);
+        Nd4j.write(dos,network2.params());
         dos.flush();
         dos.close();
 

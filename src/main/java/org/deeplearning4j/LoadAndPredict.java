@@ -15,6 +15,8 @@ import org.nd4j.linalg.dataset.api.iterator.DataSetIterator;
 import org.nd4j.linalg.factory.Nd4j;
 import org.nd4j.linalg.lossfunctions.LossFunctions;
 
+import java.io.FileInputStream;
+import java.io.InputStream;
 import java.util.Collections;
 
 /**
@@ -30,7 +32,7 @@ public class LoadAndPredict {
                 .weightInit(WeightInit.XAVIER)
                 .seed(123)
                 .constrainGradientToUnitNorm(true)
-                .iterations(5).activationFunction("relu")
+                .iterations(5).activationFunction("linear")
                 .lossFunction(LossFunctions.LossFunction.RMSE_XENT)
                 .learningRate(1e-1f).batchSize(1000)
                 .momentum(0.5).constrainGradientToUnitNorm(true)
@@ -43,13 +45,14 @@ public class LoadAndPredict {
 
         MultiLayerNetwork model = new MultiLayerNetwork(conf);
         model.init();
-        INDArray read  = Nd4j.readTxt("params.txt");
+        InputStream is = new FileInputStream("params.txt");
+        INDArray read  = Nd4j.read(is);
         model.setParameters(read);
         DataSetIterator iter = new MnistDataSetIterator(1000,60000);
         Evaluation eval = new Evaluation();
         while(iter.hasNext()) {
             DataSet next = iter.next();
-            eval.eval(next.getLabels(),model.output(next.getFeatureMatrix(),true));
+            eval.eval(next.getLabels(),model.output(next.getFeatureMatrix(), true));
         }
 
         System.out.println(eval.stats());
