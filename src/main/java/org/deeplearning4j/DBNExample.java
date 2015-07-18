@@ -32,7 +32,7 @@ public class DBNExample {
 
     public static void main(String[] args) throws Exception {
 
-        MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder().weightInit(WeightInit.VI).optimizationAlgo(OptimizationAlgorithm.ITERATION_GRADIENT_DESCENT)
+        MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder().weightInit(WeightInit.VI).optimizationAlgo(OptimizationAlgorithm.LINE_GRADIENT_DESCENT)
                 .iterations(5).layer(new RBM())
                 .lossFunction(LossFunctions.LossFunction.RMSE_XENT)
                 .learningRate(1e-1f).nIn(784).nOut(10).list(4)
