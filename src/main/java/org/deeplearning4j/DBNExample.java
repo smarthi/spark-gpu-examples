@@ -36,14 +36,14 @@ public class DBNExample {
                 .iterations(5).layer(new RBM())
                 .lossFunction(LossFunctions.LossFunction.RMSE_XENT)
                 .learningRate(1e-1f).nIn(784).nOut(10).list(4)
-                .hiddenLayerSizes(new int[]{600, 500, 400})
+                .hiddenLayerSizes(600, 500, 400)
                 .build();
 
 
 
 
         MultiLayerNetwork network = new MultiLayerNetwork(conf);
-       network.init();
+        network.init();
         network.setListeners(Arrays.<IterationListener>asList(new ScoreIterationListener(1)));
 
         DataSetIterator iter = new MultipleEpochsIterator(10,new MnistDataSetIterator(1000,1000));

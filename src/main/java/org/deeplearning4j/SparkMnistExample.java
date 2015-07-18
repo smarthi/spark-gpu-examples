@@ -62,7 +62,7 @@ public class SparkMnistExample {
                 .learningRate(1e-1f).batchSize(1000)
                 .momentum(0.5).constrainGradientToUnitNorm(true)
                 .momentumAfter(Collections.singletonMap(3, 0.9))
-                .optimizationAlgo(OptimizationAlgorithm.ITERATION_GRADIENT_DESCENT)
+                .optimizationAlgo(OptimizationAlgorithm.LINE_GRADIENT_DESCENT)
                 .list(4)
                 .hiddenLayerSizes(new int[]{600, 250, 200})
                 .override(3, new ClassifierOverride())
