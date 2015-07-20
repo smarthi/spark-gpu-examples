@@ -61,7 +61,7 @@ public class SparkMnistExample {
                 .lossFunction(LossFunctions.LossFunction.RMSE_XENT)
                 .learningRate(1e-1f).batchSize(1000)
                 .momentum(0.5).constrainGradientToUnitNorm(true)
-                .momentumAfter(Collections.singletonMap(3, 0.9))
+                .momentumAfter(Collections.singletonMap(3, 0.9)).l1(0.3).l2(1e-3).regularization(true)
                 .optimizationAlgo(OptimizationAlgorithm.LINE_GRADIENT_DESCENT)
                 .list(4)
                 .hiddenLayerSizes(600, 250, 200)
