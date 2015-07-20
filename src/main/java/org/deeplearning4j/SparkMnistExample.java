@@ -64,7 +64,7 @@ public class SparkMnistExample {
                 .momentumAfter(Collections.singletonMap(3, 0.9))
                 .optimizationAlgo(OptimizationAlgorithm.LINE_GRADIENT_DESCENT)
                 .list(4)
-                .hiddenLayerSizes(new int[]{600, 250, 200})
+                .hiddenLayerSizes(600, 250, 200)
                 .override(3, new ClassifierOverride())
                 .build();
 
@@ -89,6 +89,17 @@ public class SparkMnistExample {
         Nd4j.write(dos,network2.params());
         dos.flush();
         dos.close();
+
+
+        org.nd4j.linalg.dataset.api.iterator.DataSetIterator iter = new MnistDataSetIterator(1000,60000);
+        Evaluation eval = new Evaluation(10);
+        while(iter.hasNext()) {
+            DataSet next = iter.next();
+            eval.eval(next.getLabels(),model.output(next.getFeatureMatrix(), true));
+        }
+
+        System.out.println(eval.stats());
+
 
     }
 }

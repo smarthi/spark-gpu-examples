@@ -53,7 +53,7 @@ public class SparkGpuExample {
 
     public static void main(String[] args) throws Exception {
         // set to test mode
-        SparkConf sparkConf = new SparkConf().set(SparkDl4jMultiLayer.AVERAGE_EACH_ITERATION,"true")
+        SparkConf sparkConf = new SparkConf().set(SparkDl4jMultiLayer.AVERAGE_EACH_ITERATION,"false")
                 .setMaster("local[*]")
                 .setAppName("sparktest");
 
@@ -62,8 +62,8 @@ public class SparkGpuExample {
 
 
         NeuralNetConfiguration conf = new NeuralNetConfiguration.Builder()
-                .lossFunction(LossFunctions.LossFunction.MCXENT).optimizationAlgo(OptimizationAlgorithm.LINE_GRADIENT_DESCENT)
-                .activationFunction("softmax")
+                .lossFunction(LossFunctions.LossFunction.MCXENT).optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
+                .activationFunction("softmax").constrainGradientToUnitNorm(true).dropOut(0.5).useDropConnect(true)
                 .iterations(10).weightInit(WeightInit.XAVIER)
                 .learningRate(1e-1).nIn(4).nOut(3).layer(new org.deeplearning4j.nn.conf.layers.OutputLayer()).build();
 
@@ -81,9 +81,9 @@ public class SparkGpuExample {
 
 
 
-        OutputLayer network2 =(OutputLayer) master.fitDataSet(data);
+        OutputLayer network2 = (OutputLayer) master.fitDataSet(data);
 
-        Evaluation evaluation = new Evaluation();
+        Evaluation evaluation = new Evaluation(3);
         evaluation.eval(d.getLabels(), network2.output(d.getFeatureMatrix()));
         System.out.println(evaluation.stats());
     }
