@@ -1,7 +1,13 @@
 # Created by .ignore support plugin (hsz.mobi)
-target/
+.iml
+.checkstyle
+.classpath
+.project
+.settings/
 .idea/
-*.iml
+target/
 pom.xml.tag
 pom.xml.releaseBackup
 pom.xml.next
+release.properties
+dependency-reduced-pom.xml

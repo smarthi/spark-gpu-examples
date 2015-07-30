@@ -6,7 +6,6 @@ import org.apache.spark.api.java.JavaSparkContext;
 import org.canova.api.conf.Configuration;
 import org.canova.api.records.reader.RecordReader;
 import org.canova.api.records.reader.impl.SVMLightRecordReader;
-import org.deeplearning4j.datasets.iterator.DataSetIterator;
 import org.deeplearning4j.datasets.iterator.impl.MnistDataSetIterator;
 import org.deeplearning4j.eval.Evaluation;
 import org.deeplearning4j.nn.api.OptimizationAlgorithm;
@@ -14,7 +13,6 @@ import org.deeplearning4j.nn.conf.MultiLayerConfiguration;
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
 import org.deeplearning4j.nn.conf.layers.OutputLayer;
 import org.deeplearning4j.nn.conf.layers.RBM;
-import org.deeplearning4j.nn.conf.override.ClassifierOverride;
 import org.deeplearning4j.nn.conf.override.ConfOverride;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.deeplearning4j.nn.weights.WeightInit;
@@ -29,7 +27,6 @@ import parquet.org.slf4j.LoggerFactory;
 import java.io.DataOutputStream;
 import java.io.FileOutputStream;
 import java.util.Collections;
-import java.util.List;
 
 /**
  * @author sonali
@@ -46,10 +43,7 @@ public class SparkMnistExample {
 
 
         JavaSparkContext sc = new JavaSparkContext(sparkConf);
-
-
         log.info("Load data....");
-
 
         log.info("Build model....");
         MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
@@ -80,7 +74,6 @@ public class SparkMnistExample {
         MultiLayerNetwork model = new MultiLayerNetwork(conf);
         model.init();
 
-
         System.out.println("Initializing network");
         SparkDl4jMultiLayer master = new SparkDl4jMultiLayer(sc,conf);
         //number of partitions should be partitioned by batch size
@@ -99,7 +92,6 @@ public class SparkMnistExample {
         dos.flush();
         dos.close();
 
-
         org.nd4j.linalg.dataset.api.iterator.DataSetIterator iter = new MnistDataSetIterator(1000,60000);
         Evaluation eval = new Evaluation(10);
         while(iter.hasNext()) {
@@ -108,7 +100,5 @@ public class SparkMnistExample {
         }
 
         System.out.println(eval.stats());
-
-
     }
 }
