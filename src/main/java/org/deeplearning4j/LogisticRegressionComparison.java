@@ -6,8 +6,6 @@ import org.apache.spark.SparkContext;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.Function;
-import org.apache.spark.ml.classification.LogisticRegression;
-import org.apache.spark.mllib.classification.LogisticRegressionWithSGD;
 import org.apache.spark.mllib.feature.StandardScaler;
 
 import org.apache.spark.mllib.classification.LogisticRegressionModel;
@@ -16,10 +14,6 @@ import org.apache.spark.mllib.evaluation.MulticlassMetrics;
 import org.apache.spark.mllib.feature.StandardScalerModel;
 import org.apache.spark.mllib.linalg.Vector;
 import org.apache.spark.mllib.linalg.Vectors;
-import org.apache.spark.mllib.optimization.Gradient;
-import org.apache.spark.mllib.optimization.L1Updater;
-import org.apache.spark.mllib.optimization.LBFGS;
-import org.apache.spark.mllib.optimization.LogisticGradient;
 import org.apache.spark.mllib.regression.LabeledPoint;
 import org.apache.spark.mllib.util.MLUtils;
 import org.canova.api.conf.Configuration;
@@ -38,8 +32,6 @@ import org.nd4j.linalg.lossfunctions.LossFunctions;
 import scala.Tuple2;
 
 import java.io.File;
-import java.util.concurrent.TimeUnit;
-
 
 /**
  * @author Adam Gibson
@@ -93,7 +85,6 @@ public class LogisticRegressionComparison {
         JavaRDD<LabeledPoint>[] splits = normalizedData.randomSplit(new double[]{0.6, 0.4}, 11L);
         JavaRDD<LabeledPoint> training = splits[0].cache();
         JavaRDD<LabeledPoint> test = splits[1];
-        Gradient g = new LogisticGradient(3);
         StopWatch watch = new StopWatch();
         // Run training algorithm to build the model.
         LogisticRegressionWithLBFGS model = new LogisticRegressionWithLBFGS().setNumClasses(3);
